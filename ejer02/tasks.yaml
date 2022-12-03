@@ -1,0 +1,38 @@
+---
+- name: Instalación de Apache
+  hosts: rocky
+  tasks:
+    - name: Instalando el paquete httpd
+      ansible.builtin.yum:
+        name: httpd
+        state: latest
+    - name: Copiando index.html personalizado
+      ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html/index.html
+    - name: Arrancando el servicio httpd
+      ansible.builtin.service:
+        name: httpd
+        enabled: true
+        state: started 
+    - name: Instalando el paquete firewall
+      ansible.builtin.yum:
+        name: firewalld
+        state: latest
+    - name: Arrancando el servicio firewall
+      ansible.builtin.service:
+        name: firewalld
+        enabled: true
+        state: started 
+    - name: Abrir el firewall para el http
+      ansible.posix.firewalld:
+        service: http
+        state: enabled
+        immediate: true
+        permanent: true
+    - name: Abrir el firewall para el https
+      ansible.posix.firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+...
