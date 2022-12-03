@@ -1,7 +1,7 @@
 # thinktic_ansible_nacho
 curso ansible thinktic nov 2022 - nacho
 
-cero conocimientos de git, docker y ansible ;-)
+cero conocimientos previos de git, docker y ansible ;-)
 ------------------------------------------------------------------------------------
 EJER01 - Se prepara el entorno para trabajar, crear maquinas con contenedores lxc, configurarlas. Uso de ansible adhoc con inventarios y modulos.
 --
