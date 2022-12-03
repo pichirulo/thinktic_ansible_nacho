@@ -378,6 +378,7 @@ alumno@nacrocky ~$ cat /var/www/html/index.html
 </body>
 </html>
 //y al abrir el navegador nos sale nuestro index.html personalizado
+
 ![image](https://user-images.githubusercontent.com/90699821/205464618-194656c8-855a-4577-904c-59530dc69647.png)
 
 ------------------------------------------------------------------------------------
