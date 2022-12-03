@@ -1,0 +1,175 @@
+# thinktic_ansible_nacho
+curso ansible thinktic nov 2022 - nacho
+
+cero conocimientos de git, docker y ansible ;-)
+------------------------------------------------------------------------------------
+EJER01 - Se prepara el entorno para trabajar, crear maquinas con contenedores lxc, configurarlas. Uso de ansible adhoc con inventarios y modulos.
+--
+//crear contenedores lxc con imagen de ubuntu y de rocky
+#lxc launch images:ubuntu/22.10 nacubu
+#lxc launch images:rockylinux/8 nacrocky
+#lxc list
+![image](https://user-images.githubusercontent.com/90699821/205459032-e8fef946-b293-49fa-90fa-19234b68d5bd.png)
+//acceso a la shell del rocky para una primera conf de red, ssh, usuario
+#lxc exec nacrocky -- /bin/bash
+//adduser alumno, añado alumno al /etc/sudoers
+//creo clave ssh para alumno, añado clave al .ssh/authorized_keys 
+alumno@ubuntu:~$ ssh alumno@nacrocky
+Last login: Sat Dec  3 20:26:55 2022 from 10.218.144.1
+[alumno@nacrocky ~]$ ip a l
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+5: eth0@if6: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 00:16:3e:a7:0d:f3 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.218.144.27/24 brd 10.218.144.255 scope global dynamic noprefixroute eth0
+       valid_lft 3306sec preferred_lft 3306sec
+[alumno@nacrocky ~]$ 
+--
+//se puede especificar el inventory que queremos usar en el fichero ansible.cfg y seria el que usaria siempre que no usemos la opcion "-i nombre_inventario"
+[defaults]
+inventory = inventory-dns
+//fichero inventory por direcciones IP
+#cat ansible-nacho/thinktic_ansible_nacho/ejer01/inventory
+10.218.144.233
+10.218.144.221
+10.218.144.100
+10.218.144.27
+10.218.144.108
+//fichero inventory por FQDN
+#cat ansible-nacho/thinktic_ansible_nacho/ejer01/inventory-dns 
+u1
+u2
+prueba-docker
+nacrocky
+nacubu
+//comprobamos el inventario, vemos que como no tenemos etiquetas nos devuelven todas las ip en "ungrouped"
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer01$ ansible-inventory -i inventory --list
+{
+    "_meta": {
+        "hostvars": {}
+    },
+    "all": {
+        "children": [
+            "ungrouped"
+        ]
+    },
+    "ungrouped": {
+        "hosts": [
+            "10.218.144.100",
+            "10.218.144.108",
+            "10.218.144.221",
+            "10.218.144.233",
+            "10.218.144.27"
+        ]
+    }
+}
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer01$ ansible-inventory -i inventory-dns --list
+{
+    "_meta": {
+        "hostvars": {}
+    },
+    "all": {
+        "children": [
+            "ungrouped"
+        ]
+    },
+    "ungrouped": {
+        "hosts": [
+            "nacrocky",
+            "nacubu",
+            "prueba-docker",
+            "u1",
+            "u2"
+        ]
+    }
+}
+//mirar si están presentes los servidores con el modulo ping
+//"A trivial test module, this module always returns pong on successful contact. It does not make sense in playbooks, but it is useful from /usr/bin/ansible to verify the ability to login and that a usable Python is configured. This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node."
+https://docs.ansible.com/ansible/latest/collections/ansible/builtin/ping_module.html
+
+$ ansible all -i inventory -m ping
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer01$ ansible all -i inventory -m ping
+10.218.144.108 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: ssh: connect to host 10.218.144.108 port 22: Connection refused",
+    "unreachable": true
+}
+10.218.144.27 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+10.218.144.233 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+10.218.144.100 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+10.218.144.221 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+//vemos que nos dice que la 10.218.144.108 no es accesible por ssh, lo que es correcto porque hemos creado dos contenedores lxc nuevos (nacrocky y nacubu) pero solo hemos configurado la maquina nacrocky
+//Ahora agrupamos agrupar los hosts usandolos [] para poder aplicar comandos sobre grupos en vez de sobre todos los elementos del inventory
+#cat ansible-nacho/thinktic_ansible_nacho/ejer01/inventory-dns
+[ubuntu]
+u1
+u2
+prueba-docker
+nacubu
+[rocky]
+nacrocky
+//comprobamos que esta ok el inventario-dns con las etiquetas
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer01$ ansible-inventory -i inventory-dns --list
+{
+    "_meta": {
+        "hostvars": {}
+    },
+    "all": {
+        "children": [
+            "rocky",
+            "ubuntu",
+            "ungrouped"
+        ]
+    },
+    "rocky": {
+        "hosts": [
+            "nacrocky"
+        ]
+    },
+    "ubuntu": {
+        "hosts": [
+            "nacubu",
+            "prueba-docker",
+            "u1",
+            "u2"
+        ]
+    }
+}
+//ahora ejecutamos el mismo modulo ping pero solo sobre la etiqueta rocky
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer01$ ansible rocky -i inventory-dns -m ping
+nacrocky | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+------------------------------------------------------------------------------------
