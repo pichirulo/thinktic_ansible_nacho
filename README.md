@@ -382,7 +382,7 @@ alumno@nacrocky ~$ cat /var/www/html/index.html
 ![image](https://user-images.githubusercontent.com/90699821/205464618-194656c8-855a-4577-904c-59530dc69647.png)
 
 ------------------------------------------------------------------------------------
-EJER03 - Instalar un servidor web (apache) en rocky.
+EJER03 - Instalar un servidor mariaDB en rocky.
 --
 
 
