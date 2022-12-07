@@ -1,0 +1,7 @@
+---
+mariadb_packages:
+  - mariadb
+  - perl                                                      
+  - perl-IO-Socket-SSL
+  - perl-libwww-perl
+  - mariadb-server

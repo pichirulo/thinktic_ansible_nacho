@@ -1,0 +1,23 @@
+---
+- name: Instalación de MariaDB
+  hosts: rocky
+  vars:
+    - mysql_root_password: "nacho01"   
+  vars_files: # importación de variables desde fichero
+    - vars_rocky8.yaml
+  tasks:
+    - name: Instalando el paquete mariadb
+      ansible.builtin.yum:
+        name: "{{ mariadb_packages }}"
+        state: latest
+    - name: arrancando mariadb
+      ansible.builtin.service:
+         name: mariadb
+         enabled: true
+         state: started
+    - name: creando pass de mysql
+      community.mysql.mysql_user module:
+          login_user: root
+          login_password: "{{ mysql_root_password }}"
+          name: alumno
+...
