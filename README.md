@@ -384,5 +384,87 @@ alumno@nacrocky ~$ cat /var/www/html/index.html
 ------------------------------------------------------------------------------------
 EJER03 - Instalar un servidor mariaDB en rocky.
 --
+//Para instalar mariadb usamos el modulo de yum y le pasamos los paquetes por variables definidas en un archivo "vars_rocky8.yaml"
+//usamos una variable en local para pasarle la pass de root.
+
+vars_rocky8.yaml
+---
+mariadb_packages:
+  - mariadb
+  - perl                                                      
+  - perl-IO-Socket-SSL
+  - perl-libwww-perl
+  - mariadb-server
+
+task.yaml
+---
+- name: Instalación de MariaDB
+  hosts: rocky
+  vars:
+    - mysql_root_password: "nacho01"   
+  vars_files: # importación de variables desde fichero
+    - vars_rocky8.yaml
+  tasks:
+    - name: Instalando el paquete mariadb
+      ansible.builtin.yum:
+        name: "{{ mariadb_packages }}"
+        state: latest
+    - name: arrancando mariadb
+      ansible.builtin.service:
+         name: mariadb
+         enabled: true
+         state: started
+    - name: creando pass de mysql
+      community.mysql.mysql_user module:
+          login_user: root
+          login_password: "{{ mysql_root_password }}"
+          name: alumno
+...
+//No se mucho de BBDD asi que no puedo hacer la parte de configurarla, pero si se puede comprobar que mariadb esta instalado y el demonio corriendo en la maquina nacrocky
+
+alumno@nacrocky ~]$ sudo systemctl status mariadb
+[sudo] password for alumno: 
+● mariadb.service - MariaDB 10.3 database server
+   Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; vendor preset: disabled)
+  Drop-In: /run/systemd/system/mariadb.service.d
+           └─zzz-lxc-service.conf
+   Active: active (running) since Wed 2022-12-07 00:22:27 UTC; 14min ago
+     Docs: man:mysqld(8)
+           https://mariadb.com/kb/en/library/systemd/
+  Process: 1040 ExecStartPost=/usr/libexec/mysql-check-upgrade (code=exited, status=0/SUCCESS)
+  Process: 756 ExecStartPre=/usr/libexec/mysql-prepare-db-dir mariadb.service (code=exited, status=0/SUCCESS)
+  Process: 725 ExecStartPre=/usr/libexec/mysql-check-socket (code=exited, status=0/SUCCESS)
+ Main PID: 793 (mysqld)
+   Status: "Taking your SQL requests now..."
+    Tasks: 30 (limit: 50131)
+   Memory: 73.0M
+   CGroup: /system.slice/mariadb.service
+           └─793 /usr/libexec/mysqld --basedir=/usr
+dic 07 00:22:27 nacrocky systemd[1]: Starting MariaDB 10.3 database server...
+dic 07 00:22:27 nacrocky mysql-prepare-db-dir[756]: Database MariaDB is probably initialized in /var/lib/mysql already, nothing is done.
+dic 07 00:22:27 nacrocky mysql-prepare-db-dir[756]: If this is not the case, make sure the /var/lib/mysql is empty before running mysql-prepare-db-dir.
+dic 07 00:22:27 nacrocky mysqld[793]: 2022-12-07  0:22:27 0 [Note] /usr/libexec/mysqld (mysqld 10.3.35-MariaDB) starting as process 793 ...
+dic 07 00:22:27 nacrocky systemd[1]: Started MariaDB 10.3 database server.
+
+//La tarea de asignar la pass da un error que no he sabido quitar
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer03$ ansible-playbook tasks.yaml 
+BECOME password: 
+ERROR! couldn't resolve module/action 'community.mysql.mysql_user module'. This often indicates a misspelling, missing collection, or incorrect module path.
+
+The error appears to be in '/home/alumno/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer03/tasks.yaml': line 18, column 7, but may
+be elsewhere in the file depending on the exact syntax problem.
+
+The offending line appears to be:
+
+         state: started
+    - name: creando pass de mysql
+      ^ here
+//
+//
+alumno@ubuntu:~/Escritorio/ansible-nacho/thinktic_ansible_nacho/ejer03$ ansible-galaxy collection install community.mysql
+Starting galaxy collection install process
+Process install dependency map
+Starting collection install process
+Skipping 'community.mysql' as it is already installed
 
 
